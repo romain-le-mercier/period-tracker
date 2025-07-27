@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: period-tracker-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-periodtracker}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password}
+      POSTGRES_DB: ${DB_NAME:-periodtracker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "7852:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-periodtracker}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - period-tracker-network
+
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: period-tracker-backend
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 7851
+      DATABASE_URL: postgresql://${DB_USER:-periodtracker}:${DB_PASSWORD:-secure_password}@db:5432/${DB_NAME:-periodtracker}
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_here}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:7850}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "7851:7851"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npm run dev
+    networks:
+      - period-tracker-network
+
+  # Frontend React Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: period-tracker-frontend
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:7851/api}
+      PORT: 7850
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "7850:7850"
+    depends_on:
+      - backend
+    command: npm start
+    networks:
+      - period-tracker-network
+
+  # Nginx (Production only)
+  nginx:
+    build:
+      context: ./nginx
+    container_name: period-tracker-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - period-tracker-network
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+
+networks:
+  period-tracker-network:
+    driver: bridge

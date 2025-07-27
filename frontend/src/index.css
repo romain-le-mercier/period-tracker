@@ -1,0 +1,207 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-text-primary antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Remove spinner from number inputs */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* Focus styles */
+  *:focus {
+    outline: none;
+  }
+
+  *:focus-visible {
+    @apply ring-2 ring-sage-400 ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  /* Button variants */
+  .btn-primary {
+    @apply bg-sage-400 text-white px-6 py-3 rounded-lg font-medium 
+           hover:bg-sage-500 active:bg-sage-600 
+           transition-colors duration-150 ease-in-out
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply border border-sage-400 text-sage-600 px-6 py-3 rounded-lg font-medium
+           hover:bg-sage-50 active:bg-sage-100
+           transition-colors duration-150 ease-in-out
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply text-sage-600 px-6 py-3 rounded-lg font-medium
+           hover:bg-sage-50 active:bg-sage-100
+           transition-colors duration-150 ease-in-out
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Card styles - Mobile optimized */
+  .card {
+    @apply bg-white rounded-xl shadow-soft p-4 md:p-6
+           transition-all duration-200 active:scale-[0.99];
+  }
+
+  .card-hover {
+    @apply card hover:shadow-medium transition-shadow duration-200;
+  }
+
+  /* Input styles - Mobile optimized */
+  .input {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-300 
+           focus:border-sage-400 focus:ring-2 focus:ring-sage-400 focus:ring-opacity-20
+           transition-all duration-150 ease-in-out
+           text-base md:text-sm min-h-[48px]
+           placeholder:text-gray-400;
+  }
+
+  /* Calendar cell styles - Mobile optimized */
+  .calendar-cell {
+    @apply relative w-full aspect-square flex items-center justify-center
+           text-xs md:text-sm font-medium rounded md:rounded-lg cursor-pointer
+           transition-all duration-150 ease-in-out
+           min-h-[40px] md:min-h-[48px] active:scale-95;
+  }
+
+  .calendar-cell-today {
+    @apply ring-2 ring-sage-400 ring-offset-2;
+  }
+
+  .calendar-cell-period {
+    @apply bg-period-active text-white hover:bg-period-predicted;
+  }
+
+  .calendar-cell-predicted {
+    @apply bg-period-light text-period-active border-2 border-period-predicted;
+  }
+
+  .calendar-cell-ovulation {
+    @apply bg-fertile-ovulation text-white;
+  }
+
+  .calendar-cell-fertile {
+    @apply bg-fertile-window text-sage-700;
+  }
+
+  .calendar-cell-no-period {
+    @apply bg-gray-100 text-gray-600 border-2 border-gray-300;
+  }
+
+  /* Loading skeleton */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  /* Mobile-specific styles */
+  @media (max-width: 640px) {
+    /* Prevent iOS zoom on input focus */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="date"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+    
+    /* Safe area padding for notched devices */
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Native-like tap highlight */
+    * {
+      -webkit-tap-highlight-color: rgba(74, 155, 142, 0.1);
+    }
+    
+    /* Smooth scrolling */
+    html {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Status indicators */
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-dot-high {
+    @apply bg-status-success;
+  }
+
+  .status-dot-medium {
+    @apply bg-status-warning;
+  }
+
+  .status-dot-low {
+    @apply bg-status-error;
+  }
+}
+
+@layer utilities {
+  /* Safe area insets for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Transition utilities */
+  .transition-base {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .transition-fast {
+    @apply transition-all duration-150 ease-in-out;
+  }
+
+  .transition-slow {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Custom animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+}

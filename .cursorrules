@@ -1,0 +1,169 @@
+# Period Tracker App - Development Rules
+
+## Project Overview
+You are building a minimalist period tracking Progressive Web App (PWA) using React. The app should be calm, sophisticated, and user-friendly while following SOLID principles for maintainable code.
+
+## SOLID Principles Implementation
+
+### Single Responsibility Principle (SRP)
+- Each component should have ONE reason to change
+- Separate concerns: UI components, business logic, data management
+- Create dedicated hooks for specific functionalities (useCycleCalculation, usePeriodHistory)
+- Keep API calls in separate service files
+- Separate calculation logic from UI rendering
+
+### Open/Closed Principle (OCP)
+- Design components to be extensible without modification
+- Use composition over inheritance
+- Create extensible prediction algorithms that can be swapped
+- Design flexible calendar components that can adapt to new features
+- Use strategy pattern for different cycle calculation methods
+
+### Liskov Substitution Principle (LSP)
+- Ensure derived components can replace base components without breaking functionality
+- Create consistent interfaces for all data models
+- Maintain consistent prop interfaces across similar components
+- Ensure all date calculation methods follow the same contract
+
+### Interface Segregation Principle (ISP)
+- Create small, focused interfaces rather than large ones
+- Split large prop interfaces into smaller, specific ones
+- Don't force components to depend on methods they don't use
+- Create specific types for different data structures (Period, Cycle, Prediction)
+
+### Dependency Inversion Principle (DIP)
+- Depend on abstractions, not concrete implementations
+- Use dependency injection for services
+- Create abstractions for data persistence layer
+- Make components depend on interfaces, not concrete classes
+
+## Technical Requirements
+
+### Stack
+- React 18+ with TypeScript
+- Tailwind CSS for styling
+- PWA configuration (manifest.json, service worker)
+- IndexedDB or similar for local data persistence
+- React Router for navigation
+
+### Architecture Patterns
+- **Repository Pattern**: Abstract data access layer
+- **Hook Pattern**: Custom hooks for business logic
+- **Component Composition**: Small, reusable components
+- **Service Layer**: Separate business logic from UI
+
+### Code Organization
+```
+src/
+├── components/           # Reusable UI components
+│   ├── Calendar/
+│   ├── PeriodEntry/
+│   └── common/
+├── hooks/               # Custom hooks for business logic
+│   ├── useCycleData.ts
+│   ├── usePredictions.ts
+│   └── usePeriodEntry.ts
+├── services/            # Business logic and API calls
+│   ├── cycleCalculator.ts
+│   ├── dataRepository.ts
+│   └── predictionEngine.ts
+├── types/               # TypeScript interfaces
+├── utils/               # Pure utility functions
+└── constants/           # App constants and config
+```
+
+## Coding Standards
+
+### Component Guidelines
+- Use functional components with hooks only
+- Implement proper TypeScript interfaces for all props
+- Keep components under 100 lines when possible
+- Use composition over complex prop drilling
+- Implement proper error boundaries
+
+### State Management
+- Use React's built-in state management (useState, useReducer, useContext)
+- Keep state as close to where it's used as possible
+- Create custom hooks for complex state logic
+- Avoid prop drilling with Context API when necessary
+
+### Performance
+- Implement React.memo for expensive components
+- Use useMemo and useCallback appropriately
+- Lazy load components when beneficial
+- Optimize bundle size with code splitting
+
+## Design System
+
+### Color Scheme (Calm & Sophisticated)
+- Primary: Soft teal (#4A9B8E) or sage green (#87A96B)
+- Secondary: Warm gray (#8B8680)
+- Accent: Muted purple (#A294B8) or soft coral (#E8A87C)
+- Background: Off-white (#FAFAFA)
+- Text: Dark gray (#2D3748)
+- Success: Soft green (#68D391)
+- Warning: Warm amber (#F6E05E)
+
+### Typography
+- Clean, readable fonts (Inter, Poppins, or system fonts)
+- Consistent spacing and hierarchy
+- Adequate contrast ratios for accessibility
+
+### UI Principles
+- Minimal, clean interface
+- Generous white space
+- Smooth animations (framer-motion recommended)
+- Touch-friendly interactive elements (44px minimum)
+- Consistent spacing using Tailwind's spacing scale
+
+## PWA Requirements
+- Offline functionality with service worker
+- App manifest for installability
+- Responsive design (mobile-first)
+- Fast loading and smooth animations
+- Add to home screen capability
+
+## Data Model
+```typescript
+interface Period {
+  id: string;
+  startDate: Date;
+  endDate?: Date;
+  cycleLength?: number;
+}
+
+interface CyclePrediction {
+  nextPeriodDate: Date;
+  ovulationDate: Date;
+  confidenceLevel: 'high' | 'medium' | 'low';
+  cycleLength: number;
+}
+```
+
+## Key Features to Implement
+1. **Period Entry**: Simple, one-tap period start logging
+2. **Calendar View**: Visual representation with color-coded days
+3. **Smart Predictions**: Adaptive algorithm that learns from history
+4. **Cycle History**: Track and display past cycles
+5. **Irregular Cycle Support**: Handle unpredictable patterns
+
+## Quality Requirements
+- 100% TypeScript coverage
+- Comprehensive error handling
+- Responsive design testing
+- Cross-browser compatibility
+- Performance optimization
+- Accessibility compliance (WCAG 2.1 AA)
+
+## Testing Strategy
+- Unit tests for calculation logic
+- Component testing with React Testing Library
+- Integration tests for user workflows
+- PWA functionality testing
+
+## Code Quality
+- Use ESLint with strict rules
+- Prettier for code formatting
+- Husky for pre-commit hooks
+- Follow conventional commit messages
+- Maintain clean, self-documenting code
