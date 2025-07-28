@@ -26,6 +26,9 @@
     "currentStatus": "Aktueller Status",
     "onPeriod": "Periode läuft",
     "daysSincePeriod": "Tag {{days}}",
+    "daysSinceLastPeriod": "{{days}} Tage seit Ihrer letzten Periode",
+    "fertile": "Fruchtbar",
+    "ovulating": "Eisprung",
     "sinceLast": "Seit letzter Periode",
     "noData": "Keine Daten",
     "lastPeriod": "Letzte Periode",
@@ -63,7 +66,7 @@
     "ending": "Beende..."
   },
   "flowIntensity": {
-    "spotting": "Schmierblutung",
+    "spotting": "Sehr leicht",
     "light": "Leicht",
     "medium": "Mittel",
     "heavy": "Stark",
