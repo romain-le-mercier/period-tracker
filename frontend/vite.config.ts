@@ -73,26 +73,11 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
-          },
-          {
-            urlPattern: /^\/api\/.*/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
           }
         ]
       },
       devOptions: {
-        enabled: true
+        enabled: false
       }
     })
   ],
@@ -104,14 +89,7 @@ export default defineConfig({
   server: {
     port: 7850,
     host: true,
-    strictPort: true,
-    proxy: {
-      '/api': {
-        target: 'http://backend:7851',
-        changeOrigin: true,
-        secure: false
-      }
-    }
+    strictPort: true
   },
   build: {
     outDir: 'build',

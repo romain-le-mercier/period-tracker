@@ -1,14 +1,5 @@
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface Period {
   id: string;
-  userId: string;
   startDate: string;
   endDate?: string;
   flowIntensity: FlowIntensity;
@@ -21,7 +12,6 @@ export interface Period {
 
 export interface Cycle {
   id: string;
-  userId: string;
   startDate: string;
   endDate?: string;
   cycleLength?: number;
@@ -36,7 +26,6 @@ export interface Cycle {
 
 export interface Prediction {
   id: string;
-  userId: string;
   type: PredictionType;
   startDate: string;
   endDate?: string;
@@ -52,7 +41,6 @@ export interface Prediction {
 
 export interface Settings {
   id: string;
-  userId: string;
   cycleLength: number;
   periodLength: number;
   lutealPhaseLength: number;

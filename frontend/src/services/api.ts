@@ -1,18 +1,13 @@
-import { User, Period, Settings, Prediction, Cycle } from '@/types';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+import { Period, Settings, Prediction, FlowIntensity } from '@/types';
+import storageService from './storage';
+import { cycleCalculator } from './cycleCalculator';
+import { predictionEngine } from './predictionEngine';
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);
     this.name = 'ApiError';
   }
-}
-
-interface AuthResponse {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
 }
 
 interface PeriodResponse {
@@ -26,96 +21,9 @@ interface PeriodResponse {
 }
 
 class ApiClient {
-  private accessToken: string | null = null;
-  private refreshToken: string | null = null;
-
   constructor() {
-    // Load tokens from localStorage
-    this.accessToken = localStorage.getItem('accessToken');
-    this.refreshToken = localStorage.getItem('refreshToken');
-  }
-
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    if (this.accessToken) {
-      headers['Authorization'] = `Bearer ${this.accessToken}`;
-    }
-
-    const response = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new ApiError(response.status, error.error?.message || 'Request failed');
-    }
-
-    return response.json();
-  }
-
-  setTokens(accessToken: string, refreshToken: string) {
-    this.accessToken = accessToken;
-    this.refreshToken = refreshToken;
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', refreshToken);
-  }
-
-  clearTokens() {
-    this.accessToken = null;
-    this.refreshToken = null;
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-  }
-
-  // Auth endpoints
-  async register(email: string, password: string, name?: string): Promise<AuthResponse> {
-    const response = await this.request<{ message: string } & AuthResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, name }),
-    });
-    
-    this.setTokens(response.accessToken, response.refreshToken);
-    return response;
-  }
-
-  async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await this.request<{ message: string } & AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    });
-    
-    this.setTokens(response.accessToken, response.refreshToken);
-    return response;
-  }
-
-  async logout(): Promise<void> {
-    try {
-      await this.request('/auth/logout', { method: 'POST' });
-    } finally {
-      this.clearTokens();
-    }
-  }
-
-  async refreshAccessToken(): Promise<void> {
-    const response = await this.request<{ accessToken: string; refreshToken: string }>('/auth/refresh', {
-      method: 'POST',
-    });
-    
-    this.setTokens(response.accessToken, response.refreshToken);
-  }
-
-  async getCurrentUser(): Promise<User> {
-    const response = await this.request<{ user: User }>('/auth/me');
-    return response.user;
+    // Initialize storage service
+    storageService.init().catch(console.error);
   }
 
   // Period endpoints
@@ -126,12 +34,24 @@ class ApiClient {
     symptoms?: string[];
     notes?: string;
   }): Promise<Period> {
-    const response = await this.request<{ message: string; period: Period }>('/periods', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    const period: Period = {
+      id: '',
+      startDate: data.startDate,
+      endDate: data.endDate,
+      flowIntensity: (data.flowIntensity as FlowIntensity) || FlowIntensity.MEDIUM,
+      symptoms: data.symptoms || [],
+      notes: data.notes,
+      isActive: !data.endDate,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const savedPeriod = await storageService.savePeriod(period);
     
-    return response.period;
+    // Recalculate cycles and predictions after creating a period
+    await this.recalculateCyclesAndPredictions();
+    
+    return savedPeriod;
   }
 
   async updatePeriod(
@@ -144,16 +64,32 @@ class ApiClient {
       notes: string;
     }>
   ): Promise<Period> {
-    const response = await this.request<{ message: string; period: Period }>(`/periods/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+    const existingPeriod = await storageService.getPeriod(id);
+    if (!existingPeriod) {
+      throw new ApiError(404, 'Period not found');
+    }
+
+    const updatedPeriod: Period = {
+      ...existingPeriod,
+      ...data,
+      flowIntensity: (data.flowIntensity as FlowIntensity) || existingPeriod.flowIntensity,
+      isActive: !data.endDate && !existingPeriod.endDate,
+      updatedAt: new Date().toISOString(),
+    };
+
+    const savedPeriod = await storageService.savePeriod(updatedPeriod);
     
-    return response.period;
+    // Recalculate cycles and predictions after updating a period
+    await this.recalculateCyclesAndPredictions();
+    
+    return savedPeriod;
   }
 
   async deletePeriod(id: string): Promise<void> {
-    await this.request(`/periods/${id}`, { method: 'DELETE' });
+    await storageService.deletePeriod(id);
+    
+    // Recalculate cycles and predictions after deleting a period
+    await this.recalculateCyclesAndPredictions();
   }
 
   async getPeriods(options?: {
@@ -162,39 +98,115 @@ class ApiClient {
     startDate?: string;
     endDate?: string;
   }): Promise<PeriodResponse> {
-    const params = new URLSearchParams();
-    if (options?.page) params.append('page', options.page.toString());
-    if (options?.limit) params.append('limit', options.limit.toString());
-    if (options?.startDate) params.append('startDate', options.startDate);
-    if (options?.endDate) params.append('endDate', options.endDate);
+    const allPeriods = await storageService.getAllPeriods();
     
-    const query = params.toString() ? `?${params.toString()}` : '';
-    return this.request<PeriodResponse>(`/periods${query}`);
+    // Filter by date range if provided
+    let filteredPeriods = allPeriods;
+    if (options?.startDate || options?.endDate) {
+      filteredPeriods = allPeriods.filter(period => {
+        const periodStart = new Date(period.startDate);
+        if (options.startDate && periodStart < new Date(options.startDate)) return false;
+        if (options.endDate && periodStart > new Date(options.endDate)) return false;
+        return true;
+      });
+    }
+    
+    // Sort by start date descending
+    filteredPeriods.sort((a, b) => 
+      new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+    );
+    
+    // Pagination
+    const page = options?.page || 1;
+    const limit = options?.limit || 10;
+    const start = (page - 1) * limit;
+    const paginatedPeriods = filteredPeriods.slice(start, start + limit);
+    
+    return {
+      periods: paginatedPeriods,
+      pagination: {
+        page,
+        limit,
+        total: filteredPeriods.length,
+        totalPages: Math.ceil(filteredPeriods.length / limit),
+      },
+    };
   }
 
   async getCurrentPeriod(): Promise<Period | null> {
-    try {
-      const response = await this.request<{ period: Period }>('/periods/current');
-      return response.period;
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 404) {
-        return null;
-      }
-      throw error;
-    }
+    return storageService.getActivePeriod();
   }
 
   // Prediction endpoints
   async getPredictions(): Promise<Prediction[]> {
-    const response = await this.request<{ predictions: Prediction[] }>('/predictions');
-    return response.predictions;
+    return storageService.getAllPredictions();
   }
 
   async generatePredictions(): Promise<Prediction[]> {
-    const response = await this.request<{ predictions: Prediction[] }>('/predictions/generate', {
-      method: 'POST',
-    });
-    return response.predictions;
+    const periods = await storageService.getAllPeriods();
+    const settings = await storageService.getSettings();
+    
+    if (!settings.enablePredictions || periods.length === 0) {
+      return [];
+    }
+    
+    // Clear all existing predictions first to avoid overlapping
+    await storageService.clearAllPredictions();
+    
+    // Calculate new predictions using prediction engine
+    const predictions = await predictionEngine.generatePredictions(periods, settings);
+    
+    // Save new predictions
+    for (const prediction of predictions) {
+      await storageService.savePrediction(prediction);
+    }
+    
+    return predictions;
+  }
+
+  // Settings endpoints
+  async getSettings(): Promise<Settings> {
+    return storageService.getSettings();
+  }
+
+  async updateSettings(settings: Partial<Settings>): Promise<Settings> {
+    const currentSettings = await storageService.getSettings();
+    const updatedSettings = {
+      ...currentSettings,
+      ...settings,
+    };
+    return storageService.saveSettings(updatedSettings);
+  }
+
+  // Utility methods
+  private async recalculateCyclesAndPredictions(): Promise<void> {
+    const periods = await storageService.getAllPeriods();
+    const settings = await storageService.getSettings();
+    
+    // Recalculate cycles
+    const cycles = cycleCalculator.calculateCycles(periods);
+    for (const cycle of cycles) {
+      await storageService.saveCycle(cycle);
+    }
+    
+    // Generate new predictions
+    if (settings.enablePredictions) {
+      await this.generatePredictions();
+    }
+  }
+
+  // Data management
+  async exportData(): Promise<any> {
+    return storageService.exportData();
+  }
+
+  async importData(data: any): Promise<void> {
+    await storageService.importData(data);
+    await this.recalculateCyclesAndPredictions();
+  }
+
+  async clearAllData(): Promise<void> {
+    await storageService.clearAllData();
   }
 }
 

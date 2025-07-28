@@ -65,7 +65,10 @@ module.exports = {
         fertile: {
           window: '#C6F6D5',
           ovulation: '#68D391',
+          light: '#C6F6D5',
+          dark: '#276749',
         },
+        ovulation: '#9F7AEA',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],

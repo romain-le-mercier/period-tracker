@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Calendar as CalendarComponent } from '@/components/Calendar/Calendar';
 import { apiClient } from '@/services/api';
 import { Period, Prediction } from '@/types';
-import { format } from 'date-fns';
 import { OfflineService } from '@/services/offline';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +9,7 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 
 export function Calendar() {
   const { t } = useTranslation();
-  const { formatLong, formatShort, formatMonthYear } = useLocalizedDate();
+  const { formatLong, formatShort } = useLocalizedDate();
   const [periods, setPeriods] = useState<Period[]>([]);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -47,13 +46,13 @@ export function Calendar() {
         // Cache periods for offline use
         OfflineService.cachePeriods(periodResponse.periods);
         
-        // Fetch predictions
+        // Generate fresh predictions based on current periods
         try {
-          const predictionsData = await apiClient.getPredictions();
-          console.log('Predictions fetched:', predictionsData);
+          const predictionsData = await apiClient.generatePredictions();
+          console.log('Predictions generated:', predictionsData);
           setPredictions(predictionsData);
         } catch (error) {
-          console.error('Failed to fetch predictions:', error);
+          console.error('Failed to generate predictions:', error);
           setPredictions([]);
         }
       } else {

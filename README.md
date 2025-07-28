@@ -1,6 +1,6 @@
-# Period Tracker - PWA Application
+# Period Tracker - Privacy-First PWA
 
-A minimalist, privacy-focused period tracking Progressive Web App (PWA) built with React, TypeScript, and Node.js. Track your menstrual cycle with intelligent predictions, symptom logging, and multi-language support.
+A minimalist, fully local period tracking Progressive Web App (PWA) built with React and TypeScript. Track your menstrual cycle with intelligent predictions and symptom logging - all data stays on your device.
 
 ![Period Tracker](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
@@ -23,286 +23,148 @@ A minimalist, privacy-focused period tracking Progressive Web App (PWA) built wi
 - 🦖 **Fun Symptom Icons**: Playful emojis for symptom tracking (mood swings = dinosaur!)
 
 ### Technical Features
-- 🔐 **Privacy-Focused**: Your data stays on your device
+- 🔐 **100% Private**: All data stored locally on your device using IndexedDB
+- 🚫 **No Server**: No backend, no authentication, no data collection
 - ⚡ **PWA Technology**: Installable as a native app
 - 🚀 **Fast Performance**: Optimized React application
 - 🛡️ **Type-Safe**: Full TypeScript implementation
+- 📤 **Data Export**: Export/import your data anytime
 
 ## 🛠️ Tech Stack
 
-### Frontend
 - **React 18** with TypeScript
 - **Vite** for fast development and building
 - **Tailwind CSS** for styling
-- **PWA** with offline support
+- **IndexedDB** for local data storage
+- **PWA** with full offline support
 - **i18next** for internationalization
 - **date-fns** for date manipulation
-
-### Backend
-- **Node.js** with Express
-- **TypeScript** for type safety
-- **Prisma ORM** with PostgreSQL
 - **Zod** for validation
-- **JWT** authentication
-- **Rate limiting** for API protection
-
-### Infrastructure
-- **Docker** & Docker Compose
-- **PostgreSQL 15** database
-- **Nginx** (optional for production)
 
 ## 📋 Prerequisites
 
-- Docker and Docker Compose installed
-- Node.js 18+ (for local development)
+- Node.js 18+ 
 - Git
+- A modern web browser
 
 ## 🚀 Quick Start
 
 ### 1. Clone the Repository
 ```bash
 git clone https://github.com/yourusername/period-tracker.git
-cd period-tracker
+cd period-tracker/frontend
 ```
 
-### 2. Environment Setup
-Copy the example environment files:
+### 2. Install Dependencies
 ```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
-
-### 3. Start with Docker
-```bash
-docker-compose up -d
-```
-
-The application will be available at:
-- Frontend: http://localhost:7850
-- Backend API: http://localhost:7851
-- Database: localhost:7852
-
-## 🔧 Development Setup
-
-### Backend Development
-```bash
-cd backend
 npm install
+```
+
+### 3. Start Development Server
+```bash
 npm run dev
 ```
 
-### Frontend Development
+The application will be available at http://localhost:7850
+
+## 🔧 Development
+
 ```bash
 cd frontend
 npm install
-npm run dev
-```
-
-### Database Migrations
-```bash
-cd backend
-npm run prisma:migrate
-npm run prisma:generate
+npm run dev     # Start development server
+npm run build   # Build for production
+npm run preview # Preview production build
+npm test        # Run tests
+npm run lint    # Run linter
 ```
 
 ## 🌍 Deployment
 
-### Option 1: Docker Deployment (Recommended)
+Since this is a static PWA with no backend, deployment is simple:
 
-#### Local/VPS Deployment
-1. **Prepare your server**:
-   ```bash
-   # Install Docker and Docker Compose
-   curl -fsSL https://get.docker.com -o get-docker.sh
-   sh get-docker.sh
-   sudo usermod -aG docker $USER
-   ```
+### Option 1: Static Hosting (Recommended)
 
-2. **Clone and configure**:
-   ```bash
-   git clone https://github.com/yourusername/period-tracker.git
-   cd period-tracker
-   ```
-
-3. **Set production environment variables**:
-   ```bash
-   # backend/.env
-   NODE_ENV=production
-   DATABASE_URL=postgresql://postgres:your-secure-password@db:5432/period_tracker
-   JWT_SECRET=your-very-secure-jwt-secret-min-32-chars
-   PORT=7851
-   
-   # frontend/.env
-   VITE_API_URL=https://api.yourdomain.com
-   ```
-
-4. **Update docker-compose.yml for production**:
-   ```yaml
-   version: '3.8'
-   services:
-     frontend:
-       environment:
-         - NODE_ENV=production
-       restart: always
-     
-     backend:
-       environment:
-         - NODE_ENV=production
-       restart: always
-     
-     db:
-       environment:
-         - POSTGRES_PASSWORD=your-secure-password
-       volumes:
-         - postgres_data:/var/lib/postgresql/data
-       restart: always
-   
-   volumes:
-     postgres_data:
-   ```
-
-5. **Deploy**:
-   ```bash
-   docker-compose up -d
-   ```
-
-#### Using Nginx Reverse Proxy
-Create `/etc/nginx/sites-available/period-tracker`:
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name yourdomain.com;
-    
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-    
-    location / {
-        proxy_pass http://localhost:7850;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-
-server {
-    listen 443 ssl http2;
-    server_name api.yourdomain.com;
-    
-    ssl_certificate /etc/letsencrypt/live/api.yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.yourdomain.com/privkey.pem;
-    
-    location / {
-        proxy_pass http://localhost:7851;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
+#### Vercel
+```bash
+npm i -g vercel
+cd frontend
+vercel
 ```
 
-### Option 2: Cloud Platform Deployment
+#### Netlify
+```bash
+# Build the app
+npm run build
 
-#### Deploy to Heroku
-1. **Install Heroku CLI** and login
-2. **Create Heroku apps**:
-   ```bash
-   heroku create your-app-frontend
-   heroku create your-app-backend
-   ```
+# Deploy to Netlify
+# Drag and drop the 'build' folder to netlify.com
+```
 
-3. **Add PostgreSQL**:
-   ```bash
-   heroku addons:create heroku-postgresql:hobby-dev -a your-app-backend
-   ```
+#### GitHub Pages
+```bash
+# Install gh-pages
+npm install --save-dev gh-pages
 
-4. **Deploy backend**:
-   ```bash
-   cd backend
-   heroku git:remote -a your-app-backend
-   git push heroku main
-   heroku run npm run prisma:migrate
-   ```
+# Add to package.json scripts:
+"predeploy": "npm run build",
+"deploy": "gh-pages -d build"
 
-5. **Deploy frontend**:
+# Deploy
+npm run deploy
+```
+
+### Option 2: Self-Hosted
+
+1. **Build the application**:
    ```bash
    cd frontend
-   heroku git:remote -a your-app-frontend
-   heroku config:set VITE_API_URL=https://your-app-backend.herokuapp.com
-   git push heroku main
-   ```
-
-#### Deploy to DigitalOcean App Platform
-1. **Create a new app** in DigitalOcean App Platform
-2. **Add components**:
-   - Frontend: Static Site from GitHub
-   - Backend: Web Service from GitHub
-   - Database: Dev Database (PostgreSQL)
-3. **Configure environment variables** in the platform
-4. **Deploy**
-
-### Option 3: Traditional VPS Deployment
-
-1. **Setup Node.js and PostgreSQL**:
-   ```bash
-   # Install Node.js
-   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-   sudo apt-get install -y nodejs
-   
-   # Install PostgreSQL
-   sudo apt-get install postgresql postgresql-contrib
-   ```
-
-2. **Setup the database**:
-   ```bash
-   sudo -u postgres psql
-   CREATE DATABASE period_tracker;
-   CREATE USER period_user WITH ENCRYPTED PASSWORD 'your-password';
-   GRANT ALL PRIVILEGES ON DATABASE period_tracker TO period_user;
-   \q
-   ```
-
-3. **Build and deploy**:
-   ```bash
-   # Backend
-   cd backend
-   npm install
    npm run build
-   npm run prisma:migrate deploy
-   
-   # Frontend
-   cd frontend
-   npm install
-   npm run build
-   # Serve the dist folder with a web server
    ```
 
-4. **Use PM2 for process management**:
+2. **Serve with any static web server**:
    ```bash
-   npm install -g pm2
-   cd backend
-   pm2 start dist/index.js --name period-tracker-api
-   pm2 save
-   pm2 startup
+   # Using Node.js
+   npx serve build -p 8080
+   
+   # Using Python
+   cd build && python -m http.server 8080
+   
+   # Using Nginx
+   # Copy build folder contents to /var/www/html
    ```
 
-## 🔒 Security Considerations
+### Option 3: Docker
 
-1. **Environment Variables**: Never commit `.env` files
-2. **HTTPS**: Always use HTTPS in production
-3. **Database**: Use strong passwords and restrict access
-4. **API Keys**: Rotate JWT secrets regularly
-5. **Rate Limiting**: Configured by default (100 req/15min in production)
-6. **CORS**: Configure appropriate origins in production
+Create a simple Dockerfile:
+```dockerfile
+FROM node:18-alpine as builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=builder /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+Build and run:
+```bash
+docker build -t period-tracker .
+docker run -p 8080:80 period-tracker
+```
+
+## 🔒 Privacy & Security
+
+1. **100% Local Storage**: All data is stored in IndexedDB on the user's device
+2. **No Server Communication**: The app never sends data to any server
+3. **No Authentication**: No accounts, no passwords, no tracking
+4. **Data Export**: Users can export their data anytime
+5. **HTTPS**: Use HTTPS when hosting to ensure secure delivery of the app
+6. **No Analytics**: No tracking scripts or analytics
 
 ## 📱 PWA Installation
 
@@ -332,26 +194,22 @@ cd frontend
 npm test
 ```
 
-## 📚 API Documentation
+## 📚 Data Storage
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login
-- `POST /api/auth/logout` - Logout
+The app uses IndexedDB to store all data locally:
 
-### Periods
-- `GET /api/periods` - Get user's periods
-- `POST /api/periods` - Create new period
-- `PUT /api/periods/:id` - Update period
-- `DELETE /api/periods/:id` - Delete period
-- `GET /api/periods/current` - Get current active period
+### Data Models
+- **Periods**: Start/end dates, flow intensity, symptoms, notes
+- **Cycles**: Calculated cycle data and statistics
+- **Predictions**: AI-powered predictions for future cycles
+- **Settings**: User preferences, language, theme
 
-### Predictions
-- `GET /api/predictions` - Get cycle predictions
-
-### User
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update profile
+### Data Management
+- All data is stored in the browser's IndexedDB
+- Data persists across app sessions
+- Users can export data as JSON
+- Users can import previously exported data
+- Clear all data option available in settings
 
 ## 🤝 Contributing
 

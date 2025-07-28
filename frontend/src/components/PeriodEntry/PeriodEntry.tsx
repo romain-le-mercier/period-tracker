@@ -26,11 +26,11 @@ export function PeriodEntry({ onPeriodLogged, currentPeriod }: PeriodEntryProps)
   const { formatLong } = useLocalizedDate();
   
   const FLOW_INTENSITIES: { value: FlowIntensity; label: string; color: string }[] = [
-    { value: 'SPOTTING', label: t('flowIntensity.spotting'), color: 'bg-period-light' },
-    { value: 'LIGHT', label: t('flowIntensity.light'), color: 'bg-period-predicted' },
-    { value: 'MEDIUM', label: t('flowIntensity.medium'), color: 'bg-period-active' },
-    { value: 'HEAVY', label: t('flowIntensity.heavy'), color: 'bg-red-600' },
-    { value: 'NO_PERIOD', label: t('flowIntensity.noPeriod'), color: 'bg-gray-300' },
+    { value: FlowIntensity.SPOTTING, label: t('flowIntensity.spotting'), color: 'bg-period-light' },
+    { value: FlowIntensity.LIGHT, label: t('flowIntensity.light'), color: 'bg-period-predicted' },
+    { value: FlowIntensity.MEDIUM, label: t('flowIntensity.medium'), color: 'bg-period-active' },
+    { value: FlowIntensity.HEAVY, label: t('flowIntensity.heavy'), color: 'bg-red-600' },
+    { value: FlowIntensity.NO_PERIOD, label: t('flowIntensity.noPeriod'), color: 'bg-gray-300' },
   ];
 
   const COMMON_SYMPTOMS = [
@@ -47,7 +47,7 @@ export function PeriodEntry({ onPeriodLogged, currentPeriod }: PeriodEntryProps)
   const [isEnding, setIsEnding] = useState(false);
   const [startDate, setStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [flowIntensity, setFlowIntensity] = useState<FlowIntensity>('MEDIUM');
+  const [flowIntensity, setFlowIntensity] = useState<FlowIntensity>(FlowIntensity.MEDIUM);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
@@ -88,7 +88,7 @@ export function PeriodEntry({ onPeriodLogged, currentPeriod }: PeriodEntryProps)
       
       setIsLogging(false);
       setStartDate(format(new Date(), 'yyyy-MM-dd'));
-      setFlowIntensity('MEDIUM');
+      setFlowIntensity(FlowIntensity.MEDIUM);
       setSelectedSymptoms([]);
       setNotes('');
       onPeriodLogged?.();
@@ -113,7 +113,7 @@ export function PeriodEntry({ onPeriodLogged, currentPeriod }: PeriodEntryProps)
       });
       setIsEnding(false);
       setEndDate(format(new Date(), 'yyyy-MM-dd'));
-      setFlowIntensity('MEDIUM');
+      setFlowIntensity(FlowIntensity.MEDIUM);
       setSelectedSymptoms([]);
       setNotes('');
       onPeriodLogged?.();
@@ -149,7 +149,7 @@ export function PeriodEntry({ onPeriodLogged, currentPeriod }: PeriodEntryProps)
             variant="secondary"
             onClick={() => {
               setIsLogging(true);
-              setFlowIntensity('NO_PERIOD');
+              setFlowIntensity(FlowIntensity.NO_PERIOD);
             }}
           >
             {t('periodEntry.logNoPeriod')}
@@ -257,7 +257,7 @@ export function PeriodEntry({ onPeriodLogged, currentPeriod }: PeriodEntryProps)
               onClick={() => {
                 setIsEnding(false);
                 setEndDate(format(new Date(), 'yyyy-MM-dd'));
-                setFlowIntensity('MEDIUM');
+                setFlowIntensity(FlowIntensity.MEDIUM);
                 setSelectedSymptoms([]);
                 setNotes('');
               }}
@@ -302,7 +302,6 @@ export function PeriodEntry({ onPeriodLogged, currentPeriod }: PeriodEntryProps)
 
   return (
     <div className="card">
-      <h3 className="text-heading-3 mb-6">{t('periodEntry.logPeriod')}</h3>
 
       {/* Start Date */}
       <div className="mb-6">
@@ -397,7 +396,7 @@ export function PeriodEntry({ onPeriodLogged, currentPeriod }: PeriodEntryProps)
           onClick={() => {
             setIsLogging(false);
             setStartDate(format(new Date(), 'yyyy-MM-dd'));
-            setFlowIntensity('MEDIUM');
+            setFlowIntensity(FlowIntensity.MEDIUM);
             setSelectedSymptoms([]);
             setNotes('');
           }}

@@ -15,7 +15,6 @@ import {
 } from 'date-fns';
 import { clsx } from 'clsx';
 import { Period, Prediction } from '@/types';
-import { Button } from '@/components/ui/Button';
 import { useTranslation } from 'react-i18next';
 import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 
@@ -27,7 +26,7 @@ interface CalendarProps {
 }
 
 export function Calendar({ periods, predictions = [], onDateClick, selectedDate }: CalendarProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { formatMonthYear } = useLocalizedDate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
 

@@ -13,14 +13,14 @@ import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 
 export function History() {
   const { t } = useTranslation();
-  const { formatLong, formatShort } = useLocalizedDate();
+  const { formatLong } = useLocalizedDate();
   
   const FLOW_INTENSITIES: { value: FlowIntensity; label: string; color: string }[] = [
-    { value: 'SPOTTING', label: t('flowIntensity.spotting'), color: 'bg-period-light' },
-    { value: 'LIGHT', label: t('flowIntensity.light'), color: 'bg-period-predicted' },
-    { value: 'MEDIUM', label: t('flowIntensity.medium'), color: 'bg-period-active' },
-    { value: 'HEAVY', label: t('flowIntensity.heavy'), color: 'bg-red-600' },
-    { value: 'NO_PERIOD', label: t('flowIntensity.noPeriod'), color: 'bg-gray-300' },
+    { value: FlowIntensity.SPOTTING, label: t('flowIntensity.spotting'), color: 'bg-period-light' },
+    { value: FlowIntensity.LIGHT, label: t('flowIntensity.light'), color: 'bg-period-predicted' },
+    { value: FlowIntensity.MEDIUM, label: t('flowIntensity.medium'), color: 'bg-period-active' },
+    { value: FlowIntensity.HEAVY, label: t('flowIntensity.heavy'), color: 'bg-red-600' },
+    { value: FlowIntensity.NO_PERIOD, label: t('flowIntensity.noPeriod'), color: 'bg-gray-300' },
   ];
 
   const COMMON_SYMPTOMS = [
@@ -53,7 +53,7 @@ export function History() {
   }>({ 
     startDate: '', 
     endDate: '', 
-    flowIntensity: 'MEDIUM', 
+    flowIntensity: FlowIntensity.MEDIUM, 
     symptoms: [], 
     notes: '' 
   });
@@ -66,7 +66,7 @@ export function History() {
   }>({ 
     startDate: format(new Date(), 'yyyy-MM-dd'), 
     endDate: '', 
-    flowIntensity: 'MEDIUM', 
+    flowIntensity: FlowIntensity.MEDIUM, 
     symptoms: [], 
     notes: '' 
   });
@@ -147,7 +147,7 @@ export function History() {
     setEditForm({ 
       startDate: '', 
       endDate: '', 
-      flowIntensity: 'MEDIUM', 
+      flowIntensity: FlowIntensity.MEDIUM, 
       symptoms: [], 
       notes: '' 
     });
@@ -199,7 +199,7 @@ export function History() {
     setAddForm({ 
       startDate: format(new Date(), 'yyyy-MM-dd'), 
       endDate: '', 
-      flowIntensity: 'MEDIUM', 
+      flowIntensity: FlowIntensity.MEDIUM, 
       symptoms: [], 
       notes: '' 
     });
@@ -210,7 +210,7 @@ export function History() {
     setAddForm({ 
       startDate: format(new Date(), 'yyyy-MM-dd'), 
       endDate: '', 
-      flowIntensity: 'MEDIUM', 
+      flowIntensity: FlowIntensity.MEDIUM, 
       symptoms: [], 
       notes: '' 
     });

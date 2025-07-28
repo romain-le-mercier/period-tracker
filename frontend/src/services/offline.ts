@@ -86,7 +86,6 @@ export class OfflineService {
   }): Period {
     const tempPeriod: Period = {
       id: `temp-${Date.now()}`,
-      userId: 'offline',
       startDate: data.startDate,
       endDate: data.endDate,
       flowIntensity: data.flowIntensity as any || 'MEDIUM',

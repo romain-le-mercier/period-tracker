@@ -1,18 +1,25 @@
 import { useState, useEffect } from 'react';
 import { PeriodEntry } from '@/components/PeriodEntry/PeriodEntry';
 import { apiClient } from '@/services/api';
-import { Period, Prediction } from '@/types';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { Period, Prediction, PredictionType } from '@/types';
+import { differenceInDays, parseISO } from 'date-fns';
 import { OfflineService } from '@/services/offline';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useTranslation } from 'react-i18next';
+import { cycleCalculator } from '@/services/cycleCalculator';
+import { useLocalizedDate } from '@/hooks/useLocalizedDate';
 
 export function Dashboard() {
   const { t } = useTranslation();
+  const { formatShort } = useLocalizedDate();
   const [currentPeriod, setCurrentPeriod] = useState<Period | null>(null);
   const [lastPeriod, setLastPeriod] = useState<Period | null>(null);
   const [nextPrediction, setNextPrediction] = useState<Prediction | null>(null);
+  const [fertilityStatus, setFertilityStatus] = useState<{ isFertile: boolean; isOvulating: boolean }>({ isFertile: false, isOvulating: false });
   const [loading, setLoading] = useState(true);
+  const [averageCycleLength, setAverageCycleLength] = useState(28);
+  const [averagePeriodLength, setAveragePeriodLength] = useState(5);
+  const [trackedCycles, setTrackedCycles] = useState(0);
   const isOnline = useOnlineStatus();
 
   const fetchPeriodData = async () => {
@@ -32,15 +39,56 @@ export function Dashboard() {
           }
         }
         
-        // Fetch predictions
+        // Get all periods for cycle calculations
+        const allPeriodsResponse = await apiClient.getPeriods({ limit: 100 });
+        const allPeriods = allPeriodsResponse.periods;
+        
+        // Calculate cycle statistics
+        if (allPeriods.length > 1) {
+          const cycles = cycleCalculator.calculateCycles(allPeriods);
+          const completeCycles = cycles.filter(c => c.isComplete);
+          
+          if (completeCycles.length > 0) {
+            setAverageCycleLength(cycleCalculator.getAverageCycleLength(completeCycles));
+            setAveragePeriodLength(cycleCalculator.getAveragePeriodLength(completeCycles));
+            setTrackedCycles(completeCycles.length);
+          }
+        }
+        
+        // Generate fresh predictions
         try {
-          const predictions = await apiClient.getPredictions();
+          const predictions = await apiClient.generatePredictions();
           const nextPeriodPrediction = predictions
-            .filter(p => p.type === 'PERIOD')
+            .filter(p => p.type === PredictionType.PERIOD)
             .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
           setNextPrediction(nextPeriodPrediction || null);
+          
+          // Check if user is currently fertile or ovulating
+          if (!current && lastPeriod) {
+            const today = new Date();
+            console.log('Checking fertility status for today:', today);
+            console.log('Available predictions:', predictions.map(p => ({ type: p.type, start: p.startDate, end: p.endDate })));
+            
+            const fertileWindow = predictions.find(p => 
+              p.type === PredictionType.FERTILE_WINDOW && 
+              new Date(p.startDate) <= today && 
+              p.endDate && new Date(p.endDate) >= today
+            );
+            const ovulation = predictions.find(p => 
+              p.type === PredictionType.OVULATION && 
+              new Date(p.startDate).toDateString() === today.toDateString()
+            );
+            
+            console.log('Fertile window found:', fertileWindow);
+            console.log('Ovulation found:', ovulation);
+            
+            setFertilityStatus({
+              isFertile: !!fertileWindow,
+              isOvulating: !!ovulation
+            });
+          }
         } catch (error) {
-          console.error('Failed to fetch predictions:', error);
+          console.error('Failed to generate predictions:', error);
         }
       } else {
         // Use cached data when offline
@@ -54,6 +102,18 @@ export function Dashboard() {
         
         if (!current && sortedPeriods.length > 0) {
           setLastPeriod(sortedPeriods[0]);
+        }
+        
+        // Calculate cycle statistics from cached data
+        if (cachedPeriods.length > 1) {
+          const cycles = cycleCalculator.calculateCycles(cachedPeriods);
+          const completeCycles = cycles.filter(c => c.isComplete);
+          
+          if (completeCycles.length > 0) {
+            setAverageCycleLength(cycleCalculator.getAverageCycleLength(completeCycles));
+            setAveragePeriodLength(cycleCalculator.getAveragePeriodLength(completeCycles));
+            setTrackedCycles(completeCycles.length);
+          }
         }
       }
     } catch (error) {
@@ -91,11 +151,6 @@ export function Dashboard() {
 
   return (
     <div className="space-y-4">
-      {/* Mobile-friendly header */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 -mx-4 px-4 py-3 md:relative md:bg-transparent md:backdrop-blur-none">
-        <h1 className="text-2xl md:text-heading-1 font-bold text-sage-600">{t('dashboard.welcome')}</h1>
-      </div>
-      
       {/* Period Entry */}
       <PeriodEntry
         currentPeriod={currentPeriod}
@@ -115,10 +170,23 @@ export function Dashboard() {
             </>
           ) : lastPeriod ? (
             <>
-              <p className="text-xl md:text-heading-3 font-semibold text-sage-600">{t('dashboard.daysSincePeriod', { days: getDaysSince(lastPeriod.startDate) })}</p>
-              <p className="text-xs md:text-sm text-text-secondary mt-1">
-                {t('dashboard.sinceLast')}
+              <p className="text-sm text-text-secondary">
+                {t('dashboard.daysSinceLastPeriod', { days: getDaysSince(lastPeriod.startDate) })}
               </p>
+              {(fertilityStatus.isFertile || fertilityStatus.isOvulating) && (
+                <div className="flex gap-2 mt-2">
+                  {fertilityStatus.isFertile && (
+                    <span className="text-xs px-2 py-1 bg-fertile-light text-fertile-dark rounded-full">
+                      {t('dashboard.fertile')}
+                    </span>
+                  )}
+                  {fertilityStatus.isOvulating && (
+                    <span className="text-xs px-2 py-1 bg-ovulation text-white rounded-full">
+                      {t('dashboard.ovulating')}
+                    </span>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <p className="text-lg md:text-heading-3 text-text-secondary">{t('dashboard.noData')}</p>
@@ -130,7 +198,7 @@ export function Dashboard() {
           {lastPeriod ? (
             <>
               <p className="text-xl md:text-heading-3 font-semibold text-text-primary">
-                {format(parseISO(lastPeriod.startDate), 'MMM d')}
+                {formatShort(lastPeriod.startDate)}
               </p>
               {lastPeriod.endDate && (
                 <p className="text-xs md:text-sm text-text-secondary mt-1">
@@ -151,7 +219,7 @@ export function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xl md:text-heading-3 font-semibold text-sage-600">
-                {format(parseISO(nextPrediction.startDate), 'MMM d')}
+                {formatShort(nextPrediction.startDate)}
               </p>
               <p className="text-xs md:text-sm text-text-secondary mt-1">
                 {t('dashboard.inDays', { days: differenceInDays(parseISO(nextPrediction.startDate), new Date()) })}
@@ -173,17 +241,17 @@ export function Dashboard() {
         <div className="grid grid-cols-3 gap-2 md:gap-4 text-center">
           <div>
             <p className="text-xs md:text-sm text-text-secondary">{t('dashboard.averageCycle')}</p>
-            <p className="text-lg md:text-heading-3 font-semibold text-sage-600">28</p>
+            <p className="text-lg md:text-heading-3 font-semibold text-sage-600">{averageCycleLength}</p>
             <p className="text-xs text-text-secondary">{t('common.days')}</p>
           </div>
           <div>
             <p className="text-xs md:text-sm text-text-secondary">{t('dashboard.averagePeriod')}</p>
-            <p className="text-lg md:text-heading-3 font-semibold text-sage-600">5</p>
+            <p className="text-lg md:text-heading-3 font-semibold text-sage-600">{averagePeriodLength}</p>
             <p className="text-xs text-text-secondary">{t('common.days')}</p>
           </div>
           <div>
             <p className="text-xs md:text-sm text-text-secondary">{t('dashboard.trackedCycles')}</p>
-            <p className="text-lg md:text-heading-3 font-semibold text-sage-600">0</p>
+            <p className="text-lg md:text-heading-3 font-semibold text-sage-600">{trackedCycles}</p>
             <p className="text-xs text-text-secondary">{t('common.total')}</p>
           </div>
         </div>

@@ -26,6 +26,9 @@
     "currentStatus": "Statut actuel",
     "onPeriod": "Règles en cours",
     "daysSincePeriod": "Jour {{days}}",
+    "daysSinceLastPeriod": "{{days}} jours depuis vos dernières règles",
+    "fertile": "Fertile",
+    "ovulating": "Ovulation",
     "sinceLast": "Depuis les dernières règles",
     "noData": "Aucune donnée",
     "lastPeriod": "Dernières règles",
@@ -63,7 +66,7 @@
     "ending": "Finalisation..."
   },
   "flowIntensity": {
-    "spotting": "Spotting",
+    "spotting": "Très léger",
     "light": "Léger",
     "medium": "Moyen",
     "heavy": "Abondant",
